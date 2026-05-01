@@ -1,0 +1,10 @@
+Package: setupyabai
+Title: setupyabai blog post
+Version: 0.1.0
+Authors@R: person("Ronald G.", "Thomas", role = c("aut", "cre"))
+Description: Blog post in ZZCOLLAB reproducible research format.
+License: CC-BY-4.0
+Encoding: UTF-8
+Imports:
+    testthat,
+    renv,

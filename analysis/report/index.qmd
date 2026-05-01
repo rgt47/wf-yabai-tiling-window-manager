@@ -1,0 +1,773 @@
+---
+title: "Configuring Yabai as a Tiling Window Manager
+  on macOS"
+subtitle: >
+  Keyboard-driven window management for a focused
+  development workflow
+author: "Ronald 'Ryy' G. Thomas"
+date: "2025-06-20"
+categories: [macos, shell]
+description: >
+  I did not really know how much faster a tiling
+  window manager could make my daily workflow until
+  I configured yabai with keyboard shortcuts and
+  stopped reaching for the mouse.
+image: "media/images/hero.jpg"
+document-type: "blog"
+draft: false
+execute:
+  echo: true
+  warning: false
+  message: false
+format:
+  html:
+    code-fold: false
+    code-tools: false
+---
+
+![A clean desktop workspace with tiled application
+windows arranged in a grid layout.
+](media/images/hero.jpg){.img-fluid width=80%
+fig-alt="A macOS desktop with application windows
+arranged in a non-overlapping tiled layout managed
+by yabai."}
+
+*A tiled workspace where every pixel is accounted
+for and every window is exactly where you need it.*
+
+# Introduction
+
+I did not really know how much faster a tiling
+window manager could make my daily workflow until I
+configured yabai with keyboard shortcuts and stopped
+reaching for the mouse. Before yabai, I spent a
+surprising amount of time dragging windows around,
+resizing them manually, and hunting for applications
+buried under overlapping panes.
+
+The trigger was a morning where I counted how many
+times I reached for the mouse just to rearrange
+windows. It was north of fifty times in a single
+hour. Every mouse grab broke my concentration and
+interrupted whatever I was thinking about. I had
+heard of tiling window managers on Linux -- i3wm,
+bspwm, dwm -- but assumed macOS had nothing
+comparable.
+
+Yabai proved me wrong. This post documents the
+complete configuration I use: the `.yabairc` file
+that controls tiling behaviour, the `skhd`
+configuration that maps keyboard shortcuts to window
+actions, and the installation steps to get both
+tools running on macOS. The goal is a fully
+keyboard-driven desktop where windows arrange
+themselves automatically.
+
+More formally, this post documents an optional addition to the
+Applications layer (Layer 10) of the Workflow Construct
+described in [post 52](/posts/52-workflow-construct/). A tiling
+window manager is not load-bearing for the construct: nothing
+in the construct's other layers requires a tiled desktop, and
+many practitioners get equivalent productivity from the macOS
+default window manager plus keyboard-driven app switching.
+This post is presented as a layer-extension for users who want
+the additional ergonomics; it can be skipped without leaving
+gaps in the construct.
+
+## Motivations
+
+- I was reaching for the mouse dozens of times per
+  hour just to resize and reposition windows, and
+  each interruption broke my concentration.
+- My R development workflow involved switching
+  between a terminal, a browser, a PDF viewer, and
+  Vim, and overlapping windows meant I could never
+  see more than one application at a time.
+- I had used i3wm briefly on a Linux machine and
+  was impressed by how much faster keyboard-driven
+  window management felt compared to the
+  drag-and-drop model.
+- The macOS built-in window management (Split View,
+  Mission Control) felt slow and limited, offering
+  only two-pane splits with no fine-grained control.
+- I wanted a configuration file I could version
+  control and deploy on any macOS machine, rather
+  than relying on GUI preferences that were
+  difficult to reproduce.
+
+## Objectives
+
+1. Install yabai and skhd on macOS using Homebrew
+   and configure both services to start
+   automatically.
+2. Write a complete `.yabairc` configuration file
+   with binary space partitioning layout, window
+   gaps, border colours, and mouse integration.
+3. Write a complete `.skhdrc` configuration file
+   with keyboard shortcuts for navigation, window
+   movement, resizing, workspace management, and
+   layout rotation.
+4. Document the full keybinding reference so that
+   the configuration is self-explanatory.
+
+I am documenting my learning process here. If you
+spot errors or have better approaches, please let
+me know.
+
+![](media/images/terminal-logo.png){.img-fluid width=30% fig-align="center"}
+
+*A focused workspace starts with removing visual
+clutter.*
+
+# Prerequisites and Setup
+
+Before proceeding, you will need:
+
+- **macOS 11 (Big Sur)** or later
+- **Homebrew** package manager installed
+- **System Integrity Protection (SIP)** partially
+  disabled (required for yabai's scripting
+  additions)
+- Basic comfort with the terminal and editing
+  configuration files
+
+Yabai requires elevated permissions to manage
+windows across all applications. The scripting
+addition (`sudo yabai --load-sa`) needs SIP to be
+partially disabled. Consult the
+[yabai wiki](https://github.com/koekeishiya/yabai/wiki/Disabling-System-Integrity-Protection)
+for detailed instructions on this step.
+
+# What is a Tiling Window Manager?
+
+A tiling window manager is a system that organises
+screen space into mutually non-overlapping frames.
+Instead of the standard macOS approach where windows
+float on top of one another and the user drags them
+into position, a tiling manager automatically
+assigns each window to a portion of the screen. When
+a new window opens, the existing layout adjusts to
+accommodate it.
+
+Think of it like a bookshelf versus a pile of books
+on a desk. With a stacking window manager (the macOS
+default), windows pile up and you dig through the
+stack to find what you need. With a tiling manager,
+every window has its own designated slot, and you
+can see everything at once.
+
+Yabai is specifically a binary space partitioning
+(BSP) tiling manager. When a new window appears,
+yabai splits the current space in half -- either
+horizontally or vertically -- and assigns the new
+window to one half. The result is a tree of
+non-overlapping rectangles that fills the entire
+screen.
+
+# Getting Started
+
+Installation uses Homebrew. The following commands
+install yabai and start it as a background service.
+
+## Installation
+
+```sh
+brew install koekeishiya/formulae/yabai
+```
+
+Start the yabai service:
+
+```sh
+yabai --start-service
+```
+
+If you need to restart after changing configuration:
+
+```sh
+yabai --restart-service
+```
+
+Keyboard shortcuts require a separate tool. The
+standard companion is `skhd` (Simple Hotkey Daemon):
+
+```sh
+brew install koekeishiya/formulae/skhd
+skhd --start-service
+```
+
+With both services running, yabai manages window
+layout and skhd translates keyboard shortcuts into
+yabai commands.
+
+![Hands on a keyboard with a tiled desktop visible
+on the monitor in the background.
+](media/images/ambiance2.jpg){.img-fluid
+fig-alt="Hands resting on a mechanical keyboard
+with a monitor showing tiled application windows
+in the background."}
+
+*The keyboard becomes the primary interface for
+all window operations.*
+
+# The Complete .yabairc Configuration
+
+Create the file `~/.yabairc` (or wherever your
+yabai configuration resides). This file is a bash
+script that yabai sources on startup. It defines
+the tiling layout, gap sizes, border colours, and
+mouse behaviour.
+
+```bash
+#!/usr/bin/env bash
+
+# Load scripting addition for window management
+sudo yabai --load-sa
+yabai -m signal --add \
+  event=dock_did_restart \
+  action="sudo yabai --load-sa"
+
+set -x
+
+# ====== Variables ============================
+
+declare -A gaps
+declare -A color
+
+gaps["top"]="12"
+gaps["bottom"]="12"
+gaps["left"]="12"
+gaps["right"]="12"
+gaps["inner"]="12"
+
+color["focused"]="0xE0808080"
+color["normal"]="0x00010101"
+color["preselect"]="0xE02d74da"
+
+# ====== Tiling Settings ======================
+
+yabai -m config layout bsp
+
+yabai -m config top_padding \
+  "${gaps["top"]}"
+yabai -m config bottom_padding \
+  "${gaps["bottom"]}"
+yabai -m config left_padding \
+  "${gaps["left"]}"
+yabai -m config right_padding \
+  "${gaps["right"]}"
+yabai -m config window_gap \
+  "${gaps["inner"]}"
+
+yabai -m config mouse_follows_focus on
+yabai -m config focus_follows_mouse on
+
+yabai -m config window_topmost    off
+yabai -m config window_opacity    off
+yabai -m config window_shadow     float
+
+yabai -m config window_border     on
+yabai -m config window_border_width 2
+yabai -m config active_window_border_color \
+  "${color["focused"]}"
+yabai -m config normal_window_border_color \
+  "${color["normal"]}"
+yabai -m config insert_feedback_color \
+  "${color["preselect"]}"
+
+yabai -m config active_window_opacity  1.0
+yabai -m config normal_window_opacity  0.90
+yabai -m config split_ratio            0.50
+
+yabai -m config auto_balance on
+
+yabai -m config mouse_modifier  fn
+yabai -m config mouse_action1   move
+yabai -m config mouse_action2   resize
+
+set +x
+printf "yabai: configuration loaded...\n"
+```
+
+The key settings to understand:
+
+- **`layout bsp`** activates binary space
+  partitioning, which is the core tiling behaviour.
+- **`gaps`** control the pixel padding between
+  windows and screen edges. Twelve pixels provides
+  enough visual separation to distinguish windows
+  without wasting space.
+- **`mouse_follows_focus`** and
+  **`focus_follows_mouse`** together create a
+  seamless experience where the cursor and window
+  focus stay synchronised.
+- **`auto_balance on`** equalises window sizes
+  after every layout change, preventing one window
+  from dominating the screen.
+- **`mouse_modifier fn`** allows holding the `fn`
+  key to move (`mouse_action1`) or resize
+  (`mouse_action2`) windows with the mouse when
+  needed.
+
+# The Complete skhd Configuration
+
+Create the file `~/.skhdrc`. This file maps
+keyboard shortcuts to yabai commands. The
+configuration below covers navigation, window
+movement, workspace management, resizing, layout
+rotation, and service control.
+
+## Window Navigation
+
+These shortcuts move focus between windows using
+Vim-style directional keys (`h`, `j`, `k`, `l`)
+with the `Alt` modifier.
+
+```bash
+# Navigation: move focus between windows
+alt - h : yabai -m window --focus west
+alt - j : yabai -m window --focus south
+alt - k : yabai -m window --focus north
+alt - l : yabai -m window --focus east
+```
+
+| Shortcut | Action |
+|----------|--------|
+| `Alt-H` | Focus window to the left |
+| `Alt-J` | Focus window below |
+| `Alt-K` | Focus window above |
+| `Alt-L` | Focus window to the right |
+
+## Window Movement (Warping)
+
+These shortcuts physically move the focused window
+to a new position in the layout using `Shift-Alt`
+and directional keys.
+
+```bash
+# Moving windows: warp focused window
+shift + alt - h : \
+  yabai -m window --warp west
+shift + alt - j : \
+  yabai -m window --warp south
+shift + alt - k : \
+  yabai -m window --warp north
+shift + alt - l : \
+  yabai -m window --warp east
+```
+
+| Shortcut | Action |
+|----------|--------|
+| `Shift-Alt-H` | Warp window left |
+| `Shift-Alt-J` | Warp window down |
+| `Shift-Alt-K` | Warp window up |
+| `Shift-Alt-L` | Warp window right |
+
+## Workspace Management
+
+Move the focused window to a specific workspace
+(space) and follow the focus to that workspace.
+
+```bash
+# Move window to workspace and follow
+shift + alt - m : \
+  yabai -m window --space last; \
+  yabai -m space --focus last
+shift + alt - p : \
+  yabai -m window --space prev; \
+  yabai -m space --focus prev
+shift + alt - n : \
+  yabai -m window --space next; \
+  yabai -m space --focus next
+shift + alt - 1 : \
+  yabai -m window --space 1; \
+  yabai -m space --focus 1
+shift + alt - 2 : \
+  yabai -m window --space 2; \
+  yabai -m space --focus 2
+shift + alt - 3 : \
+  yabai -m window --space 3; \
+  yabai -m space --focus 3
+shift + alt - 4 : \
+  yabai -m window --space 4; \
+  yabai -m space --focus 4
+```
+
+| Shortcut | Action |
+|----------|--------|
+| `Shift-Alt-M` | Move to last workspace |
+| `Shift-Alt-P` | Move to previous workspace |
+| `Shift-Alt-N` | Move to next workspace |
+| `Shift-Alt-1` | Move to workspace 1 |
+| `Shift-Alt-2` | Move to workspace 2 |
+| `Shift-Alt-3` | Move to workspace 3 |
+| `Shift-Alt-4` | Move to workspace 4 |
+
+## Display Management
+
+Move the focused window between physical displays.
+
+```bash
+# Move window between displays
+shift + alt - s : \
+  yabai -m window --display west; \
+  yabai -m display --focus west
+shift + alt - g : \
+  yabai -m window --display east; \
+  yabai -m display --focus east
+```
+
+## Window Resizing
+
+Resize windows in 50-pixel increments using
+`Ctrl-Alt` and directional keys.
+
+```bash
+# Resize windows
+lctrl + alt - h : \
+  yabai -m window --resize left:-50:0; \
+  yabai -m window --resize right:-50:0
+lctrl + alt - j : \
+  yabai -m window --resize bottom:0:50; \
+  yabai -m window --resize top:0:50
+lctrl + alt - k : \
+  yabai -m window --resize top:0:-50; \
+  yabai -m window --resize bottom:0:-50
+lctrl + alt - l : \
+  yabai -m window --resize right:50:0; \
+  yabai -m window --resize left:50:0
+
+# Equalise all window sizes
+lctrl + alt - e : yabai -m space --balance
+```
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl-Alt-H` | Shrink horizontally |
+| `Ctrl-Alt-J` | Grow vertically |
+| `Ctrl-Alt-K` | Shrink vertically |
+| `Ctrl-Alt-L` | Grow horizontally |
+| `Ctrl-Alt-E` | Equalise all windows |
+
+## Layout Rotation and Mirroring
+
+Rotate the entire layout or mirror it across an
+axis.
+
+```bash
+# Rotate layout
+alt - r : yabai -m space --rotate 270
+shift + alt - r : \
+  yabai -m space --rotate 90
+
+# Mirror on X and Y axis
+shift + alt - x : \
+  yabai -m space --mirror x-axis
+shift + alt - y : \
+  yabai -m space --mirror y-axis
+```
+
+## Gaps, Floating, and Fullscreen
+
+Toggle gaps, float individual windows, and enter
+fullscreen mode.
+
+```bash
+# Toggle gaps
+lctrl + alt - g : \
+  yabai -m space --toggle padding; \
+  yabai -m space --toggle gap
+
+# Float or unfloat a window
+shift + alt - space : \
+  yabai -m window --toggle float; \
+  yabai -m window --toggle border
+
+# Fullscreen
+alt - f : \
+  yabai -m window --toggle zoom-fullscreen
+shift + alt - f : \
+  yabai -m window --toggle native-fullscreen
+```
+
+## Application Launcher and Service Control
+
+Open a terminal and restart yabai from the keyboard.
+
+```bash
+# Open iTerm2
+alt - return : "${HOME}"/bin/open_iterm.sh
+
+# Restart yabai
+shift + lctrl + alt - r : \
+  /usr/bin/env osascript <<< \
+    "display notification \
+    \"Restarting Yabai\" \
+    with title \"Yabai\""; \
+  launchctl kickstart -k \
+    "gui/${UID}/homebrew.mxcl.yabai"
+```
+
+## Things to Watch Out For
+
+1. **SIP must be partially disabled.** Yabai's
+   scripting addition requires System Integrity
+   Protection to be partially disabled. Without it,
+   yabai can manage window focus but cannot move or
+   resize windows belonging to other applications.
+
+2. **macOS updates may re-enable SIP.** After a
+   major macOS update, check whether SIP has been
+   re-enabled. If yabai stops managing windows
+   after an update, this is the most likely cause.
+
+3. **Some applications resist tiling.** System
+   Preferences, Finder dialogs, and certain
+   Electron apps may not respond to yabai commands.
+   Use `yabai -m rule --add app="System
+   Preferences" manage=off` to exclude specific
+   applications.
+
+4. **`fn` key behaviour varies by keyboard.** The
+   `mouse_modifier fn` setting assumes a standard
+   Apple keyboard. On external keyboards, `fn` may
+   not be recognised; consider using `ctrl` or
+   `cmd` instead.
+
+5. **skhd conflicts with system shortcuts.** Some
+   `Alt` combinations are already bound by macOS or
+   specific applications. Test each shortcut to
+   confirm it does not conflict with existing
+   bindings.
+
+![A wide-angle view of a workspace with multiple
+monitors arranged side by side.
+](media/images/ambiance3.jpg){.img-fluid
+fig-alt="A panoramic photograph of a multi-monitor
+workspace with natural light, representing the
+reflective conclusion of the configuration process."}
+
+*Reflecting on a workspace that now manages itself.*
+
+## Lessons Learnt
+
+### Conceptual Understanding
+
+- A tiling window manager fundamentally changes the
+  relationship between the user and the desktop by
+  eliminating manual window placement entirely.
+- Binary space partitioning produces balanced
+  layouts automatically, but the split direction
+  alternates, which can produce unexpected layouts
+  with many windows.
+- The `focus_follows_mouse` setting reduces the
+  number of deliberate focus-switching actions,
+  which compounds into significant time savings
+  over a workday.
+- Window gaps serve a functional purpose beyond
+  aesthetics: they make window boundaries visible,
+  which helps when focus follows the mouse.
+
+### Technical Skills
+
+- Yabai's configuration is a bash script, which
+  means shell variables, loops, and conditionals
+  can be used to create dynamic layouts.
+- skhd uses a simple grammar for modifier keys
+  (`alt`, `shift`, `lctrl`) that is more readable
+  than the hex-based keycodes used by other hotkey
+  daemons.
+- The `yabai -m rule` command allows per-application
+  exceptions, which is essential for handling
+  dialog boxes and floating utilities.
+- Display management commands (`--display west`,
+  `--display east`) require multiple monitors to be
+  connected; they fail silently on single-monitor
+  setups.
+
+### Gotchas and Pitfalls
+
+- Restarting yabai from skhd requires using
+  `launchctl kickstart` rather than `yabai
+  --restart-service` to ensure the scripting
+  addition reloads correctly.
+- The `window_border` setting can cause visual
+  artefacts on some macOS versions; disable it if
+  borders flicker or appear misaligned.
+- Changing `layout` from `bsp` to `float` on a
+  space does not restore window positions; windows
+  remain where the tiling manager placed them.
+- The `auto_balance on` setting redistributes
+  space equally after every window event, which
+  can be disorienting if you prefer a primary
+  window with smaller side panes.
+
+## Limitations
+
+- Yabai requires SIP to be partially disabled,
+  which some organisations prohibit on managed
+  macOS devices.
+- The scripting addition must be reloaded after
+  every macOS update, adding maintenance overhead.
+- Yabai does not support Wayland or Linux; it is
+  exclusively a macOS tool.
+- Complex multi-monitor setups with different
+  resolutions and scaling factors can produce
+  inconsistent gap sizes.
+- There is no graphical configuration tool; all
+  settings must be edited in text files and
+  reloaded manually.
+- Applications that create their own window
+  management (e.g., Emacs frames, some Java
+  applications) may conflict with yabai's layout
+  decisions.
+
+## Opportunities for Improvement
+
+1. Create per-workspace layout rules so that
+   workspace 1 uses BSP while workspace 2 uses a
+   stacked layout for reference documents.
+2. Add application-specific rules using `yabai -m
+   rule` to exclude floating utilities, dialog
+   boxes, and system preference panes.
+3. Write a shell script that detects the number of
+   connected displays and adjusts gap sizes
+   accordingly.
+4. Integrate with
+   [spacebar](https://github.com/cmacrae/spacebar)
+   or
+   [SketchyBar](https://github.com/FelixKratz/SketchyBar)
+   for a status bar that displays workspace
+   information.
+5. Create workspace-specific shortcuts that launch
+   predefined application layouts (e.g., "research
+   mode" with Vim, a terminal, and a PDF viewer).
+6. Explore `yabai -m signal` to trigger scripts
+   when specific window events occur, such as
+   automatically floating new dialog boxes.
+
+# Wrapping Up
+
+Configuring yabai and skhd transformed my macOS
+desktop from a manually managed collection of
+overlapping windows into a keyboard-driven tiling
+environment. The initial investment of time --
+perhaps two hours of configuration and testing --
+has been repaid many times over in reduced context
+switching and fewer mouse interruptions.
+
+The most important lesson I took from this process
+is that window management is a solved problem. The
+Linux community figured this out years ago with
+i3wm, bspwm, and similar tools. Yabai brings the
+same philosophy to macOS with minimal compromise.
+
+For anyone starting with yabai, I would recommend
+beginning with just the navigation shortcuts
+(`Alt-H/J/K/L`) and the BSP layout. Add workspace
+management and resizing shortcuts only after the
+basic navigation feels natural. Trying to learn
+thirty keybindings at once is a recipe for
+frustration.
+
+Main takeaways:
+
+- BSP tiling with 12-pixel gaps provides a clean,
+  automatic layout for most development workflows.
+- Vim-style directional navigation (`H/J/K/L`)
+  transfers muscle memory from text editing to
+  window management.
+- `focus_follows_mouse` eliminates a significant
+  source of unnecessary keystrokes throughout the
+  day.
+- Version-controlling `.yabairc` and `.skhdrc`
+  means the entire desktop configuration is
+  portable and reproducible.
+
+# See Also
+
+**Related posts:**
+
+- "Configure the Command Line for Data Science
+  Development" (terminal and shell configuration)
+- "Setting Up R, Vimtex, and UltiSnips in Vim"
+  (complementary Vim configuration)
+
+**Key resources:**
+
+- [Yabai GitHub repository](
+  https://github.com/koekeishiya/yabai)
+- [skhd GitHub repository](
+  https://github.com/koekeishiya/skhd)
+- [Tiling window manager (Wikipedia)](
+  https://en.wikipedia.org/wiki/
+  Tiling_window_manager)
+- [Tiling macOS: Moving from i3wm to Yabai
+  -- Steven Braun](
+  https://www.steven-braun.com/blog/2022/
+  i3wm-to-yabai/)
+- [macOS Yabai Configuration -- Bryce Smith](
+  https://bryce-s.com/yabai/)
+- [Configuring Yabai for Focus
+  -- Evan Travers](
+  https://evantravers.com/articles/2024/02/15/
+  yabai-tiling-window-management-for-osx/)
+
+# Reproducibility
+
+This configuration was developed and tested on
+macOS Ventura (13.x) and macOS Sonoma (14.x) with
+yabai 6.x and skhd 0.3.x. The following files
+constitute the complete configuration:
+
+| File | Purpose |
+|------|---------|
+| `~/.yabairc` | Tiling layout and behaviour |
+| `~/.skhdrc` | Keyboard shortcut mappings |
+
+To reproduce the environment:
+
+```sh
+# Install yabai and skhd
+brew install koekeishiya/formulae/yabai
+brew install koekeishiya/formulae/skhd
+
+# Copy configuration files
+cp yabairc ~/.yabairc
+cp skhdrc ~/.skhdrc
+chmod +x ~/.yabairc
+
+# Start services
+yabai --start-service
+skhd --start-service
+```
+
+Note that SIP must be partially disabled before
+yabai's scripting addition will function. Consult
+the
+[yabai wiki](https://github.com/koekeishiya/yabai/wiki/Disabling-System-Integrity-Protection)
+for platform-specific instructions.
+
+# Let's Connect
+
+- **GitHub:**
+  [rgt47](https://github.com/rgt47)
+- **Twitter/X:**
+  [@rgt47](https://twitter.com/rgt47)
+- **LinkedIn:**
+  [Ronald Glenn Thomas](
+  https://linkedin.com/in/rgthomaslab)
+- **Email:**
+  [rgtlab.org/contact](
+  https://rgtlab.org/contact)
+
+I would enjoy hearing from you if:
+
+- You spot an error or a better approach to any of
+  the code in this post.
+- You have suggestions for topics you would like to
+  see covered.
+- You want to discuss R programming, data science,
+  or reproducible research.
+- You have questions about anything in this
+  tutorial.
+- You just want to say hello and connect.
