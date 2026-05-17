@@ -1,9 +1,6 @@
 ---
 title: "Configuring Yabai as a Tiling Window Manager
   on macOS"
-subtitle: >
-  Keyboard-driven window management for a focused
-  development workflow
 author: "Ronald 'Ryy' G. Thomas"
 date: "2025-06-20"
 categories: [macos, shell]
@@ -30,7 +27,7 @@ windows arranged in a grid layout.
 ](media/images/hero.jpg){.img-fluid width=80%
 fig-alt="A macOS desktop with application windows
 arranged in a non-overlapping tiled layout managed
-by yabai."}
+by yabai." fig-align="center"}
 
 *A tiled workspace where every pixel is accounted
 for and every window is exactly where you need it.*
