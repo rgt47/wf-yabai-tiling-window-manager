@@ -30,7 +30,7 @@ arranged in a non-overlapping tiled layout managed
 by yabai." fig-align="center"}
 
 *A tiled workspace where every pixel is accounted
-for and every window is exactly where you need it.*
+for and every window is exactly where it should be.*
 
 # Introduction
 
@@ -51,16 +51,15 @@ heard of tiling window managers on Linux -- i3wm,
 bspwm, dwm -- but assumed macOS had nothing
 comparable.
 
-Yabai proved me wrong. This post documents the
-complete configuration I use: the `.yabairc` file
-that controls tiling behaviour, the `skhd`
-configuration that maps keyboard shortcuts to window
-actions, and the installation steps to get both
-tools running on macOS. The goal is a fully
-keyboard-driven desktop where windows arrange
-themselves automatically.
+Yabai proved me wrong. We document the complete
+configuration used: the `.yabairc` file that controls
+tiling behaviour, the `skhd` configuration that maps
+keyboard shortcuts to window actions, and the
+installation steps to get both tools running on macOS.
+The goal is a fully keyboard-driven desktop where
+windows arrange themselves automatically.
 
-More formally, this post documents an optional addition to the
+More formally, we document an optional addition to the
 Applications layer (Layer 10) of the Workflow Construct
 described in [post 52](/posts/52-workflow-construct/). A tiling
 window manager is not load-bearing for the construct: nothing
@@ -118,7 +117,7 @@ clutter.*
 
 # Prerequisites and Setup
 
-Before proceeding, you will need:
+Before proceeding, the following are required:
 
 - **macOS 11 (Big Sur)** or later
 - **Homebrew** package manager installed
@@ -148,15 +147,15 @@ accommodate it.
 
 Think of it like a bookshelf versus a pile of books
 on a desk. With a stacking window manager (the macOS
-default), windows pile up and you dig through the
-stack to find what you need. With a tiling manager,
-every window has its own designated slot, and you
-can see everything at once.
+default), windows pile up and one digs through the
+stack to find what is needed. With a tiling manager,
+every window has its own designated slot, and
+everything is visible at once.
 
 Yabai is specifically a binary space partitioning
 (BSP) tiling manager. When a new window appears,
-yabai splits the current space in half -- either
-horizontally or vertically -- and assigns the new
+yabai splits the current space in half (either
+horizontally or vertically) and assigns the new
 window to one half. The result is a tree of
 non-overlapping rectangles that fills the entire
 screen.
@@ -178,7 +177,7 @@ Start the yabai service:
 yabai --start-service
 ```
 
-If you need to restart after changing configuration:
+To restart after changing the configuration:
 
 ```sh
 yabai --restart-service
@@ -208,7 +207,7 @@ all window operations.*
 
 # The Complete .yabairc Configuration
 
-Create the file `~/.yabairc` (or wherever your
+Create the file `~/.yabairc` (or wherever the
 yabai configuration resides). This file is a bash
 script that yabai sources on startup. It defines
 the tiling layout, gap sizes, border colours, and
@@ -595,8 +594,8 @@ reflective conclusion of the configuration process."}
   remain where the tiling manager placed them.
 - The `auto_balance on` setting redistributes
   space equally after every window event, which
-  can be disorienting if you prefer a primary
-  window with smaller side panes.
+  can be disorienting for practitioners who prefer a
+  primary window with smaller side panes.
 
 ## Limitations
 
@@ -647,38 +646,35 @@ reflective conclusion of the configuration process."}
 Configuring yabai and skhd transformed my macOS
 desktop from a manually managed collection of
 overlapping windows into a keyboard-driven tiling
-environment. The initial investment of time --
-perhaps two hours of configuration and testing --
+environment. The initial investment of time
+(perhaps two hours of configuration and testing)
 has been repaid many times over in reduced context
 switching and fewer mouse interruptions.
 
-The most important lesson I took from this process
-is that window management is a solved problem. The
+The most important lesson from this process is
+that window management is a solved problem. The
 Linux community figured this out years ago with
 i3wm, bspwm, and similar tools. Yabai brings the
 same philosophy to macOS with minimal compromise.
 
-For anyone starting with yabai, I would recommend
-beginning with just the navigation shortcuts
-(`Alt-H/J/K/L`) and the BSP layout. Add workspace
-management and resizing shortcuts only after the
-basic navigation feels natural. Trying to learn
-thirty keybindings at once is a recipe for
-frustration.
+For anyone starting with yabai, begin with just the
+navigation shortcuts (`Alt-H/J/K/L`) and the BSP
+layout. Add workspace management and resizing
+shortcuts only after the basic navigation feels
+natural. Trying to learn thirty keybindings at once
+is a recipe for frustration.
 
-Main takeaways:
-
-- BSP tiling with 12-pixel gaps provides a clean,
-  automatic layout for most development workflows.
-- Vim-style directional navigation (`H/J/K/L`)
-  transfers muscle memory from text editing to
-  window management.
-- `focus_follows_mouse` eliminates a significant
-  source of unnecessary keystrokes throughout the
-  day.
-- Version-controlling `.yabairc` and `.skhdrc`
-  means the entire desktop configuration is
-  portable and reproducible.
+In conclusion, four points merit emphasis. First,
+BSP tiling with 12-pixel gaps provides a clean,
+automatic layout for most development workflows.
+Second, Vim-style directional navigation
+(`H/J/K/L`) transfers muscle memory from text
+editing to window management. Third,
+`focus_follows_mouse` eliminates a significant
+source of unnecessary keystrokes throughout the
+day. Fourth, version-controlling `.yabairc` and
+`.skhdrc` makes the entire desktop configuration
+portable and reproducible.
 
 # See Also
 
