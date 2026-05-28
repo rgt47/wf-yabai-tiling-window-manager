@@ -20,6 +20,8 @@ format:
   html:
     code-fold: false
     code-tools: false
+cluster: workflow-construct
+cluster-order: 9
 ---
 
 ![A clean desktop workspace with tiled application
@@ -764,3 +766,21 @@ I would enjoy hearing from you if:
 - You have questions about anything in this
   tutorial.
 - You just want to say hello and connect.
+
+## Related posts in this cluster
+
+This post is part of the *Workflow Construct* series.
+Recommended reading order:
+
+1. Post 15: [A Workflow Construct for the Modern Data Scientist](../15-wf-construct-overview-anchor/)
+2. Post 16: [Unix Command-Line Workspace Setup for Data Science](../16-wf-unix-workspace-config/)
+3. Post 17: [Multi-Laptop macOS Bootstrap](../17-wf-multi-laptop-dotfiles-bootstrap/)
+4. Post 18: [Setting Up Git for Data Science Workflows](../18-wf-git-for-data-science/)
+5. Post 19: [Setting Up Neovim as a Data Science IDE](../19-wf-neovim-data-science-ide/)
+6. Post 20: [Extending the R-Vim Workflow with LaTeX](../20-wf-r-vim-latex-workflow/)
+7. Post 21: [Modern CLI Replacements for the Shell Layer](../21-wf-modern-cli-tools/)
+8. Post 22: [LLM-Augmented Editing for the Workflow Construct](../22-wf-claude-code-in-shell/)
+9. **Post 23: Configuring Yabai as a Tiling Window Manager** (this post)
+10. Post 24: [A pocket terminal with ttyd and Tailscale](../24-wf-pocket-terminal-ttyd-tailscale/)
+11. Post 25: [Install Linux Mint on a MacBook Air](../25-wf-linux-mint-on-macbook/)
+
