@@ -9,7 +9,7 @@ description: >
   window manager could make my daily workflow until
   I configured yabai with keyboard shortcuts and
   stopped reaching for the mouse.
-image: "media/images/hero.jpg"
+image: "media/images/hero.png"
 document-type: "blog"
 draft: false
 execute:
@@ -26,7 +26,7 @@ cluster-order: 9
 
 ![A clean desktop workspace with tiled application
 windows arranged in a grid layout.
-](media/images/hero.jpg){.img-fluid width=80%
+](media/images/hero.png){.img-fluid width=80%
 fig-alt="A macOS desktop with application windows
 arranged in a non-overlapping tiled layout managed
 by yabai." fig-align="center"}
