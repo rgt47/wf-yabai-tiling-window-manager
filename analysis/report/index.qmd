@@ -11,7 +11,7 @@ description: >
   stopped reaching for the mouse.
 image: "media/images/hero.png"
 document-type: "blog"
-draft: false
+draft: true
 execute:
   echo: true
   warning: false
@@ -199,7 +199,7 @@ yabai commands.
 
 ![Hands on a keyboard with a tiled desktop visible
 on the monitor in the background.
-](media/images/ambiance2.jpg){.img-fluid
+](media/images/ambiance2.png){.img-fluid
 fig-alt="Hands resting on a mechanical keyboard
 with a monitor showing tiled application windows
 in the background."}
@@ -539,7 +539,7 @@ shift + lctrl + alt - r : \
 
 ![A wide-angle view of a workspace with multiple
 monitors arranged side by side.
-](media/images/ambiance3.jpg){.img-fluid
+](media/images/ambiance3.png){.img-fluid
 fig-alt="A panoramic photograph of a multi-monitor
 workspace with natural light, representing the
 reflective conclusion of the configuration process."}
