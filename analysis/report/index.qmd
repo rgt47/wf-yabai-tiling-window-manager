@@ -11,7 +11,7 @@ description: >
   stopped reaching for the mouse.
 image: "media/images/hero.png"
 document-type: "blog"
-draft: true
+draft: false
 execute:
   echo: true
   warning: false
